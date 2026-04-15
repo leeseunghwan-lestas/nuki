@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome to nuki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <script src="../../theme-init.js"></script>
+
+  <div class="container">
+    <!-- Progress bar -->
+    <div class="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <section class="step active" data-step="1">
+      <div class="step-icon">
+        <img src="../../icons/icon128.png" alt="nuki" width="72" height="72">
+      </div>
+      <h1 data-i18n="welcome.title">Welcome to nuki</h1>
+      <p class="step-desc" data-i18n="welcome.subtitle">Extract text from anywhere on your screen.</p>
+      <div class="step-visual">
+        <div class="demo-flow">
+          <span class="demo-chip" data-i18n="welcome.flow1">Select area</span>
+          <span class="demo-arrow">&rarr;</span>
+          <span class="demo-chip" data-i18n="welcome.flow2">AI reads text</span>
+          <span class="demo-arrow">&rarr;</span>
+          <span class="demo-chip" data-i18n="welcome.flow3">Copied!</span>
+        </div>
+      </div>
+      <div class="lang-select">
+        <button class="lang-btn active" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="ja">日本語</button>
+      </div>
+      <button class="btn-primary btn-next" data-i18n="welcome.getStarted">Get Started</button>
+    </section>
+
+    <!-- Step 2: API Key -->
+    <section class="step" data-step="2">
+      <div class="step-badge">1</div>
+      <h2 data-i18n="welcome.apiTitle">Set up your API key</h2>
+      <p class="step-desc" data-i18n="welcome.apiDesc">nuki uses Google Gemini AI to read text from images. You need a free API key to get started.</p>
+      <div class="api-setup">
+        <a href="https://aistudio.google.com/apikey" target="_blank" class="btn-link" data-i18n="welcome.getApiKey">Get free API key from Google AI Studio &rarr;</a>
+        <div class="input-row">
+          <input type="password" id="apiKeyInput" class="input-field" placeholder="AIza..." data-i18n-placeholder="options.apiKeyPlaceholder">
+          <button id="toggleApiKey" class="btn-icon-sm" aria-label="Show/Hide">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8Z"/><circle cx="8" cy="8" r="2"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn-primary btn-next" data-i18n="welcome.next">Next</button>
+      <button class="btn-text" id="skipApiKey" data-i18n="welcome.skipApiKey">Set up later</button>
+      <button class="btn-text btn-back" data-i18n="welcome.back">Back</button>
+    </section>
+
+    <!-- Step 3: How to use -->
+    <section class="step" data-step="3">
+      <div class="step-badge">2</div>
+      <h2 data-i18n="welcome.usageTitle">How to use</h2>
+      <div class="usage-cards">
+        <div class="usage-card">
+          <div class="usage-card-header">
+            <kbd id="shortcutDisplay"></kbd>
+          </div>
+          <p class="usage-card-title" data-i18n="welcome.shortcutTitle">Keyboard shortcut</p>
+          <p class="usage-card-desc" data-i18n="welcome.shortcutDesc">Press anywhere to instantly start capturing.</p>
+        </div>
+        <div class="usage-card">
+          <div class="usage-card-header">
+            <span class="usage-card-icon">&#9776;</span>
+          </div>
+          <p class="usage-card-title" data-i18n="welcome.panelTitle">Side Panel</p>
+          <p class="usage-card-desc" data-i18n="welcome.panelDesc">Click the nuki icon, then press "Capture Area" button.</p>
+        </div>
+      </div>
+      <div class="usage-steps">
+        <div class="usage-step">
+          <span class="usage-step-num">1</span>
+          <span data-i18n="welcome.step1">Drag to select the area with text</span>
+        </div>
+        <div class="usage-step">
+          <span class="usage-step-num">2</span>
+          <span data-i18n="welcome.step2">AI extracts the text automatically</span>
+        </div>
+        <div class="usage-step">
+          <span class="usage-step-num">3</span>
+          <span data-i18n="welcome.step3">Text is copied to your clipboard</span>
+        </div>
+      </div>
+      <button class="btn-primary btn-next" data-i18n="welcome.next">Next</button>
+      <button class="btn-text btn-back" data-i18n="welcome.back">Back</button>
+    </section>
+
+    <!-- Step 4: Settings overview -->
+    <section class="step" data-step="4">
+      <div class="step-badge">3</div>
+      <h2 data-i18n="welcome.settingsTitle">Settings</h2>
+      <p class="step-desc" data-i18n="welcome.settingsDesc">You can change these anytime from the settings page.</p>
+      <div class="settings-grid">
+        <div class="setting-item">
+          <span class="setting-label" data-i18n="welcome.settingTheme">Theme</span>
+          <span class="setting-value" data-i18n="welcome.settingThemeValue">Light / Dark / System</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label" data-i18n="welcome.settingLang">Language</span>
+          <span class="setting-value" data-i18n="welcome.settingLangValue">English / Japanese</span>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label" data-i18n="welcome.settingModel">AI Model</span>
+          <span class="setting-value" data-i18n="welcome.settingModelValue">Flash Lite (fast) / Flash (accurate)</span>
+        </div>
+      </div>
+      <button class="btn-primary btn-next" data-i18n="welcome.next">Next</button>
+      <button class="btn-text btn-back" data-i18n="welcome.back">Back</button>
+    </section>
+
+    <!-- Step 5: Done -->
+    <section class="step" data-step="5">
+      <div class="step-icon done-icon">
+        <span>&#10003;</span>
+      </div>
+      <h2 data-i18n="welcome.doneTitle">You're all set!</h2>
+      <p class="step-desc" data-i18n="welcome.doneDesc">Try capturing text right now.</p>
+      <div class="done-shortcut">
+        <kbd id="shortcutDisplayFinal"></kbd>
+      </div>
+      <button class="btn-primary" id="btnFinish" data-i18n="welcome.finish">Start using nuki</button>
+    </section>
+  </div>
+
+  <script src="welcome.js" type="module"></script>
+</body>
+</html>

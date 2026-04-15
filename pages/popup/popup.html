@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>nuki</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <script src="../../theme-init.js"></script>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <button id="settingsBtn" class="btn-icon" data-i18n-title="popup.settings" title="Settings" aria-label="Settings">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="2.5"/>
+          <path d="M13.1 10a1.2 1.2 0 0 0 .24 1.32l.04.04a1.45 1.45 0 1 1-2.06 2.06l-.04-.04a1.2 1.2 0 0 0-1.32-.24 1.2 1.2 0 0 0-.72 1.1v.11a1.45 1.45 0 1 1-2.9 0v-.06a1.2 1.2 0 0 0-.78-1.1 1.2 1.2 0 0 0-1.32.24l-.04.04a1.45 1.45 0 1 1-2.06-2.06l.04-.04A1.2 1.2 0 0 0 2.38 10a1.2 1.2 0 0 0-1.1-.72H1.17a1.45 1.45 0 0 1 0-2.9h.06a1.2 1.2 0 0 0 1.1-.78 1.2 1.2 0 0 0-.24-1.32l-.04-.04A1.45 1.45 0 1 1 4.1 2.18l.04.04a1.2 1.2 0 0 0 1.32.24h.06a1.2 1.2 0 0 0 .72-1.1V1.25a1.45 1.45 0 1 1 2.9 0v.06a1.2 1.2 0 0 0 .72 1.1 1.2 1.2 0 0 0 1.32-.24l.04-.04a1.45 1.45 0 1 1 2.06 2.06l-.04.04a1.2 1.2 0 0 0-.24 1.32v.06a1.2 1.2 0 0 0 1.1.72h.11a1.45 1.45 0 0 1 0 2.9h-.06a1.2 1.2 0 0 0-1.1.72Z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Capture / Cancel Button -->
+    <button id="captureBtn" class="btn-capture" data-i18n="popup.capture">
+      Capture
+    </button>
+    <button id="cancelCaptureBtn" class="btn-cancel" hidden data-i18n="popup.cancelCapture">Cancel Capture</button>
+
+    <!-- API Key Banner -->
+    <div id="apiKeyBanner" class="banner" hidden>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 10.5v.5"/></svg>
+      <span data-i18n="popup.apiKeyBanner">Set up your Gemini API key to get started.</span>
+      <button id="bannerSettingsBtn" class="btn-dismiss" data-i18n="popup.goSettings">Settings &rarr;</button>
+    </div>
+
+    <!-- Error Display -->
+    <div id="errorBox" class="error-box" hidden></div>
+
+    <!-- History -->
+    <section id="historySection" hidden>
+      <div class="history-header">
+        <span class="history-title" data-i18n="popup.historyTitle">Clipboard</span>
+        <button id="clearHistory" class="history-clear" data-i18n="popup.clearHistory">Clear</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span class="footer-brand">nuki</span>
+      <span class="footer-sep">&middot;</span>
+      <kbd class="footer-shortcut" id="shortcutHint"></kbd>
+    </div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

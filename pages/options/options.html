@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>nuki - Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <script src="../../theme-init.js"></script>
+  <div class="container">
+    <div class="page-header">
+      <h1 data-i18n="options.title">nuki Settings</h1>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="app" data-i18n="options.tabApp">App</button>
+      <button class="tab" data-tab="gemini" data-i18n="options.tabGemini">Gemini API</button>
+    </div>
+
+    <!-- App Settings Tab -->
+    <div class="tab-content active" id="tab-app">
+      <section class="section">
+        <div class="section-label" data-i18n="options.language">Language</div>
+        <div class="field">
+          <select id="language" class="select-field">
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-label" data-i18n="options.appearance">Appearance</div>
+        <div class="field">
+          <label class="field-label" data-i18n="options.theme">Theme</label>
+          <div class="theme-selector">
+            <label class="theme-option">
+              <input type="radio" name="theme" value="light">
+              <span class="theme-chip">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3.5"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7"/></svg>
+                <span data-i18n="options.themeLight">Light</span>
+              </span>
+            </label>
+            <label class="theme-option">
+              <input type="radio" name="theme" value="dark">
+              <span class="theme-chip">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 8.5a5.5 5.5 0 1 1-6-6 4.5 4.5 0 0 0 6 6Z"/></svg>
+                <span data-i18n="options.themeDark">Dark</span>
+              </span>
+            </label>
+            <label class="theme-option">
+              <input type="radio" name="theme" value="system" checked>
+              <span class="theme-chip">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="9" rx="1.5"/><path d="M5.5 14.5h5"/></svg>
+                <span data-i18n="options.themeSystem">System</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Gemini API Tab -->
+    <div class="tab-content" id="tab-gemini">
+      <section class="section">
+        <div class="section-label" data-i18n="options.apiKey">API Key</div>
+        <div class="field">
+          <div class="input-group">
+            <input type="password" id="apiKey" data-i18n-placeholder="options.apiKeyPlaceholder" placeholder="AIza..." class="input-field">
+            <button id="toggleKey" class="btn-icon-input" data-i18n-title="options.showHide" title="Show/Hide" aria-label="Show/Hide">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8Z"/><circle cx="8" cy="8" r="2"/></svg>
+            </button>
+          </div>
+          <p class="hint"><span data-i18n="options.apiKeyHint">Get your API key from</span> <a href="https://aistudio.google.com/apikey" target="_blank" data-i18n="options.apiKeyLink">Google AI Studio</a></p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-label" data-i18n="options.model">Model</div>
+        <div class="field">
+          <label class="radio-option">
+            <input type="radio" name="model" value="gemini-2.5-flash-lite" checked>
+            <span class="radio-label">
+              <span class="radio-dot"></span>
+              <span data-i18n="options.modelFlash25Lite">Gemini 2.5 Flash Lite</span>
+              <span class="model-hint" data-i18n="options.modelFlash25LiteHint">Fast &amp; free</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="model" value="gemini-2.5-flash">
+            <span class="radio-label">
+              <span class="radio-dot"></span>
+              <span data-i18n="options.modelFlash25">Gemini 2.5 Flash</span>
+              <span class="model-hint" data-i18n="options.modelFlash25Hint">Better accuracy</span>
+            </span>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div class="actions">
+      <button id="save" class="btn-primary" data-i18n="options.save">Save</button>
+      <button id="resetDefaults" class="btn-secondary" data-i18n="options.resetDefaults">Reset to Defaults</button>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+  </div>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>
