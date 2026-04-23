@@ -65,6 +65,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     input.type = input.type === 'password' ? 'text' : 'password';
   });
 
+  // Skip tutorial — jump straight to final step so user can close
+  document.getElementById('skipTutorial').addEventListener('click', () => {
+    showStep(TOTAL_STEPS);
+  });
+
   // Finish button
   document.getElementById('btnFinish').addEventListener('click', () => {
     window.close();
@@ -123,8 +128,12 @@ function prevStep() {
 function showStep(step) {
   document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
   currentStep = step;
-  document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+  const section = document.querySelector(`.step[data-step="${currentStep}"]`);
+  section.classList.add('active');
   updateProgress();
+  // Move focus to primary action for keyboard/screen-reader users
+  const primary = section.querySelector('.btn-primary, .btn-next');
+  if (primary) primary.focus({ preventScroll: true });
 }
 
 function updateProgress() {

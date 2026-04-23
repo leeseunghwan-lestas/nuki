@@ -28,20 +28,20 @@
     <button id="cancelCaptureBtn" class="btn-cancel" hidden data-i18n="popup.cancelCapture">Cancel Capture</button>
 
     <!-- API Key Banner -->
-    <div id="apiKeyBanner" class="banner" hidden>
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 10.5v.5"/></svg>
+    <div id="apiKeyBanner" class="banner" role="status" hidden>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 10.5v.5"/></svg>
       <span data-i18n="popup.apiKeyBanner">Set up your Gemini API key to get started.</span>
       <button id="bannerSettingsBtn" class="btn-dismiss" data-i18n="popup.goSettings">Settings &rarr;</button>
     </div>
 
     <!-- Error Display -->
-    <div id="errorBox" class="error-box" hidden></div>
+    <div id="errorBox" class="error-box" role="alert" aria-live="polite" hidden></div>
 
     <!-- History -->
     <section id="historySection" hidden>
       <div class="history-header">
         <span class="history-title" data-i18n="popup.historyTitle">Clipboard</span>
-        <button id="clearHistory" class="history-clear" data-i18n="popup.clearHistory">Clear</button>
+        <button id="clearHistory" class="history-clear" data-i18n="popup.clearHistory" data-i18n-aria-label="popup.clearHistoryAria">Clear</button>
       </div>
       <div id="historyList" class="history-list"></div>
     </section>

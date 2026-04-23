@@ -109,6 +109,7 @@ async function renderHistory() {
     card.className = 'history-card';
     card.tabIndex = 0;
     card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', t('popup.cardAriaLabel'));
 
     const textEl = document.createElement('div');
     textEl.className = 'history-card-text';
@@ -125,8 +126,17 @@ async function renderHistory() {
     meta.appendChild(hostSpan);
     meta.appendChild(timeSpan);
 
+    // Edit button (top-right corner, subtle by default)
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'history-card-edit';
+    editBtn.setAttribute('aria-label', t('popup.edit'));
+    editBtn.title = t('popup.edit');
+    editBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5H2.5v-3z"/></svg>';
+
     card.appendChild(textEl);
     card.appendChild(meta);
+    card.appendChild(editBtn);
 
     const copyEntry = () => {
       copyToClipboard(entry.text);
@@ -141,8 +151,75 @@ async function renderHistory() {
       setTimeout(() => { badge.hidden = true; }, 1200);
     };
 
-    card.addEventListener('click', copyEntry);
+    const enterEditMode = () => {
+      card.classList.add('editing');
+      // Strip click-to-copy semantics while editing — avoid stale/misleading a11y hints
+      card.removeAttribute('role');
+      card.removeAttribute('aria-label');
+      card.removeAttribute('tabindex');
+      textEl.hidden = true;
+
+      const editor = document.createElement('textarea');
+      editor.className = 'history-card-editor';
+      editor.value = entry.text;
+      editor.setAttribute('aria-label', t('popup.editAriaLabel'));
+
+      const actions = document.createElement('div');
+      actions.className = 'history-card-actions';
+      const saveBtn = document.createElement('button');
+      saveBtn.type = 'button';
+      saveBtn.className = 'history-card-save';
+      saveBtn.textContent = t('popup.save');
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'history-card-cancel';
+      cancelBtn.textContent = t('popup.cancel');
+      actions.appendChild(cancelBtn);
+      actions.appendChild(saveBtn);
+
+      card.insertBefore(editor, meta);
+      card.insertBefore(actions, meta);
+      editor.focus();
+      editor.select();
+
+      const cleanup = () => renderHistory();
+
+      saveBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const newText = editor.value.trim();
+        if (newText && newText !== entry.text) {
+          await updateHistoryEntry(entry.timestamp, newText);
+          copyToClipboard(newText);
+        }
+        cleanup();
+      });
+      cancelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cleanup();
+      });
+      editor.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          // Prevent bubbling to document-level Escape handler (cancelCapture)
+          e.preventDefault();
+          e.stopPropagation();
+          cleanup();
+        }
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveBtn.click(); }
+      });
+    };
+
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      enterEditMode();
+    });
+
+    card.addEventListener('click', (e) => {
+      if (card.classList.contains('editing')) return;
+      if (e.target.closest('.history-card-edit')) return;
+      copyEntry();
+    });
     card.addEventListener('keydown', (e) => {
+      if (card.classList.contains('editing')) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         copyEntry();
@@ -152,6 +229,16 @@ async function renderHistory() {
     list.appendChild(card);
   });
 
+}
+
+async function updateHistoryEntry(originalTimestamp, newText) {
+  // Look up by the entry's original timestamp — index would be stale if a new
+  // capture shifted the array between render and save.
+  const { history = [] } = await chrome.storage.local.get('history');
+  const idx = history.findIndex(h => h.timestamp === originalTimestamp);
+  if (idx === -1) return;
+  history[idx] = { ...history[idx], text: newText };
+  await chrome.storage.local.set({ history });
 }
 
 async function clearHistory() {

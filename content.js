@@ -238,6 +238,11 @@
 
     const overlay = document.createElement('div');
     overlay.id = 'kc-capture-overlay';
+    // role=dialog communicates purpose to screen readers; we don't add
+    // aria-modal="true" because we don't implement a true focus trap
+    // (would lie to assistive tech). ESC still dismisses.
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', labelText || 'Drag to select area');
     overlay.style.cssText = `
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       z-index: 2147483646; cursor: crosshair; background: rgba(12, 14, 20, 0.1);
@@ -267,12 +272,15 @@
     `;
     const labelText2 = document.createElement('span');
     labelText2.textContent = labelText || 'Drag to select area';
-    const cancelBtn = document.createElement('span');
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
     cancelBtn.textContent = '✕';
+    cancelBtn.setAttribute('aria-label', 'Cancel');
     cancelBtn.style.cssText = `
       cursor: pointer; padding: 2px 8px; border-radius: 6px;
       font-size: 13px; font-weight: 500; opacity: 0.5;
       transition: opacity 0.15s, background 0.15s;
+      background: transparent; border: none; color: inherit;
     `;
     cancelBtn.addEventListener('mouseover', () => { cancelBtn.style.opacity = '1'; cancelBtn.style.background = 'rgba(255,255,255,0.08)'; });
     cancelBtn.addEventListener('mouseout', () => { cancelBtn.style.opacity = '0.5'; cancelBtn.style.background = 'none'; });
