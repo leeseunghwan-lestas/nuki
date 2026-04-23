@@ -23,25 +23,6 @@
     } catch {}
   }
 
-  // Inline labels — content scripts can't import ESM i18n module.
-  // Keep in sync with utils/i18n.js for any keys added here.
-  const LABELS = {
-    en: { extracting: 'Extracting...' },
-    ja: { extracting: '抽出中...' },
-  };
-
-  function getLabel(key) {
-    return new Promise((resolve) => {
-      try {
-        chrome.storage?.local?.get('settings', ({ settings = {} }) => {
-          if (chrome.runtime.lastError) return resolve(LABELS.en[key]);
-          const lang = settings.language || 'en';
-          resolve((LABELS[lang] || LABELS.en)[key] || LABELS.en[key]);
-        });
-      } catch { resolve(LABELS.en[key]); }
-    });
-  }
-
   // Remove previous listener on extension reload (old listener is dead)
   if (window.__kcListener) {
     try { chrome.runtime.onMessage.removeListener(window.__kcListener); } catch {}
@@ -170,6 +151,10 @@
     if (existing) existing.remove();
 
     const isDark = await resolveIsDark();
+
+    // Safety net: if a "copied" modal already appeared while our async setup
+    // was running, bail out to avoid an orphan loading toast that never dismisses.
+    if (type === 'loading' && document.getElementById('kc-center-modal')) return;
 
     const icons = {
       loading: '\u2699', success: '\u2713', warning: '\u26A0',
@@ -328,8 +313,12 @@
 
       if (rect.w < 10 || rect.h < 10) return;
 
-      // Show loading toast immediately (don't wait for background round-trip)
-      getLabel('extracting').then(label => showPageToast(label, 'loading'));
+      // NOTE: We intentionally don't show the loading toast here.
+      // The background script sends notifyTab(extracting, 'loading') within
+      // ~100ms after receiving CAPTURE_AREA, which produces the same UX
+      // without the race condition that plagued the earlier approach
+      // (async getLabel() could resolve AFTER showCenterModal cleared the
+      // toast, leaving an orphaned "Extracting..." that never dismissed).
 
       setTimeout(() => {
         safeSendMessage({
