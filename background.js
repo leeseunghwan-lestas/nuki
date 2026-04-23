@@ -9,11 +9,16 @@ const messages = {
     noText: 'No text found',
     dragToSelect: 'Drag to select area · ESC to cancel',
     'error.noApiKey': 'API key not configured. Please set it in Settings.',
+    'error.invalidApiKey': 'API key is invalid. Open Settings and re-check — it may be mistyped, revoked, or not a Gemini API key.',
     'error.emptyResponse': 'No text found in the captured area. Try selecting a larger area.',
     'error.network': 'Network error. Please check your connection.',
     'error.protectedPage': 'Cannot capture this page.',
     'error.cropFailed': 'Failed to process the captured image.',
     'error.apiError': 'API error: ', // localizeError() appends detail via concatenation (not placeholder)
+    'error.quotaExceeded': 'API quota exceeded. Please wait a moment or check your plan.',
+    'error.rateLimited': 'Too many requests in a short time. Please wait a moment and try again.',
+    'error.serverError': 'Gemini is temporarily unavailable. Please try again shortly.',
+    'error.blocked': 'This content was blocked by the AI safety filter. Try a different area.',
     'error.unknown': 'An unexpected error occurred.',
     'error.ocr.no_text': 'No text found in this area.',
     'error.ocr.blurry': 'Image is too blurry to read. Try zooming in first.',
@@ -27,11 +32,16 @@ const messages = {
     noText: 'テキストが見つかりません',
     dragToSelect: '範囲をドラッグして選択 · ESCでキャンセル',
     'error.noApiKey': 'APIキーが設定されていません。設定画面で入力してください。',
+    'error.invalidApiKey': 'APIキーが無効です。設定画面でご確認ください — 入力ミス、無効化、または Gemini 用でないキーの可能性があります。',
     'error.emptyResponse': 'キャプチャした範囲にテキストが見つかりません。もう少し広い範囲を選択してください。',
     'error.network': 'ネットワークエラーです。接続を確認してください。',
     'error.protectedPage': 'このページはキャプチャできません。',
     'error.cropFailed': 'キャプチャ画像の処理に失敗しました。',
     'error.apiError': 'APIエラー: ',
+    'error.quotaExceeded': 'API使用量の上限に達しました。しばらく待つか、プランを確認してください。',
+    'error.rateLimited': '短時間のリクエストが多すぎます。少し待ってから再度お試しください。',
+    'error.serverError': 'Gemini サーバーが一時的にご利用いただけません。しばらくしてから再度お試しください。',
+    'error.blocked': 'AIのセーフティフィルターによりブロックされました。別の範囲をお試しください。',
     'error.unknown': '予期しないエラーが発生しました。',
     'error.ocr.no_text': 'この範囲にテキストが見つかりません。',
     'error.ocr.blurry': '画像がぼやけて読み取れません。先にズームインしてみてください。',
@@ -58,8 +68,17 @@ async function localizeError(errMsg) {
   return errMsg;
 }
 
-// --- Capture lock (prevent concurrent extractions) ---
-let captureInProgress = false;
+// --- Capture lock (per-tab, prevents concurrent extractions on same tab) ---
+const activeCaptures = new Set();
+
+// Pages Chrome blocks extensions from — captureVisibleTab/executeScript will fail
+function isCapturableUrl(url) {
+  if (!url) return false;
+  const blockedSchemes = ['chrome://', 'chrome-extension://', 'devtools://', 'view-source:', 'about:'];
+  if (blockedSchemes.some(p => url.startsWith(p))) return false;
+  if (url.startsWith('https://chromewebstore.google.com')) return false;
+  return true;
+}
 
 // --- Side Panel Setup + Pre-warm Offscreen ---
 chrome.runtime.onInstalled.addListener((details) => {
@@ -87,6 +106,10 @@ chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'capture-area') {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) return;
+    if (!isCapturableUrl(tab.url)) {
+      notifyTab(tab.id, await getMsg('error.protectedPage'), 'error');
+      return;
+    }
     await injectContentScript(tab.id);
     const label = await getMsg('dragToSelect');
     await sendMessageToTab(tab.id, { action: ACTION.START_CAPTURE, label });
@@ -100,8 +123,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
+  // Forward to popup/side panel — not handled by background
+  if (message.action === ACTION.CAPTURE_MODE_CHANGED) {
+    broadcastToPopup(message);
+    return false;
+  }
+
   if (message.action === ACTION.CANCEL_CAPTURE) {
-    captureInProgress = false;
+    // Clear active capture for sender's tab (or all if no sender tab)
+    const tabId = sender.tab?.id;
+    if (tabId) activeCaptures.delete(tabId);
+    else activeCaptures.clear();
     return false;
   }
 
@@ -109,6 +141,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const tabId = sender.tab?.id;
     if (tabId) {
       captureAreaExtraction(tabId, message.rect, message.devicePixelRatio).catch(() => {});
+      sendResponse({ received: true });
+    } else {
+      sendResponse({ received: false });
     }
     return false;
   }
@@ -117,6 +152,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) return sendResponse({ ok: false });
+      if (!isCapturableUrl(tab.url)) {
+        const msg = await getMsg('error.protectedPage');
+        broadcastToPopup({ action: ACTION.EXTRACTION_ERROR, error: 'error.protectedPage' });
+        notifyTab(tab.id, msg, 'error');
+        return sendResponse({ ok: false, reason: 'protectedPage' });
+      }
       await chrome.tabs.update(tab.id, { active: true });
       await injectContentScript(tab.id);
       const label = await getMsg('dragToSelect');
@@ -129,18 +170,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // --- Area Capture Extraction ---
 async function captureAreaExtraction(tabId, rect, devicePixelRatio) {
-  if (captureInProgress) return;
-  captureInProgress = true;
-
-  await injectContentScript(tabId);
-  notifyTab(tabId, await getMsg('extracting'), 'loading');
+  if (activeCaptures.has(tabId)) return;
+  activeCaptures.add(tabId);
 
   try {
+    const tabMeta = await chrome.tabs.get(tabId).catch(() => null);
+    if (!isCapturableUrl(tabMeta?.url)) throw new Error('error.protectedPage');
+
+    await injectContentScript(tabId);
+    notifyTab(tabId, await getMsg('extracting'), 'loading');
+
     const { settings = {} } = await chrome.storage.local.get('settings');
     if (!settings.apiKey) throw new Error('error.noApiKey');
 
     // 1. Capture screenshot (PNG for lossless OCR accuracy)
-    const dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+    let dataUrl;
+    try {
+      dataUrl = await chrome.tabs.captureVisibleTab(null, { format: 'png' });
+    } catch (e) {
+      // Chrome refuses capture when host permission is missing for the current URL
+      if (/all_urls|activeTab|Cannot access/i.test(e?.message || '')) {
+        throw new Error('error.protectedPage');
+      }
+      throw e;
+    }
 
     // 2. Crop via offscreen document
     await ensureOffscreen();
@@ -185,17 +238,18 @@ async function captureAreaExtraction(tabId, rect, devicePixelRatio) {
 
   } catch (err) {
     // OCR quality warnings — show as warning toast, not error
-    if (err.message.startsWith('error.ocr.')) {
+    if (err.message?.startsWith('error.ocr.')) {
       broadcastToPopup({ action: ACTION.RESULTS_READY }); // Reset popup UI
       const warningMsg = await getMsg(err.message) || await getMsg('noText');
       notifyTab(tabId, warningMsg, 'warning');
     } else {
+      console.error('[nuki] captureAreaExtraction failed:', err);
       const userMsg = await localizeError(err.message);
       broadcastToPopup({ action: ACTION.EXTRACTION_ERROR, error: err.message });
       notifyTab(tabId, userMsg, 'error');
     }
   } finally {
-    captureInProgress = false;
+    activeCaptures.delete(tabId);
   }
 }
 

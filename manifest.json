@@ -1,8 +1,8 @@
 {
-  "manifest_version": 3,
-  "name": "nuki",
+  "manifest_version": 1,
+  "name": "nuki(Beta)",
   "version": "1.1.0",
-  "description": "Extract text from any area on screen — powered by Gemini AI",
+  "description": "画面上の任意の領域からテキストを抽出 — Gemini AI によって提供されています / Extract text from any area on screen — powered by Gemini AI",
   "permissions": [
     "activeTab",
     "storage",
@@ -12,8 +12,11 @@
     "scripting"
   ],
   "host_permissions": [
+    "<all_urls>",
+    "file:///*",
     "https://generativelanguage.googleapis.com/*"
   ],
+  "incognito": "spanning",
   "background": {
     "service_worker": "background.js",
     "type": "module"

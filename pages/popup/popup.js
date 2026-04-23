@@ -162,11 +162,11 @@ async function clearHistory() {
 function formatTimeAgo(ts) {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
+  if (mins < 1) return t('time.now');
+  if (mins < 60) return `${mins}${t('time.minute')}`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
+  if (hours < 24) return `${hours}${t('time.hour')}`;
+  return `${Math.floor(hours / 24)}${t('time.day')}`;
 }
 
 // --- Helpers ---
@@ -198,8 +198,8 @@ function showError(msg) {
   }
   box.hidden = false;
 
-  // Persistent errors stay visible; transient errors auto-dismiss
-  const persistent = ['error.noApiKey', 'error.apiError'];
+  // Persistent errors stay visible (user needs to act); transient errors auto-dismiss
+  const persistent = ['error.noApiKey', 'error.invalidApiKey', 'error.apiError', 'error.quotaExceeded', 'error.blocked'];
   if (!persistent.some(k => msg.startsWith(k))) {
     setTimeout(() => { box.hidden = true; }, 5000);
   }

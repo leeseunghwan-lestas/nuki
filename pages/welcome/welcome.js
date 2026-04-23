@@ -1,7 +1,8 @@
-import { applyI18n, setLanguage, loadLanguage, loadTheme, watchSystemTheme } from '../../utils/i18n.js';
+import { t, applyI18n, setLanguage, loadLanguage, loadTheme, watchSystemTheme } from '../../utils/i18n.js';
 import { ACTION } from '../../utils/actions.js';
+import { isValidApiKeyFormat } from '../../utils/gemini.js';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 let currentStep = 1;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -75,8 +76,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function nextStep() {
   // Save API key if entered on step 2
   if (currentStep === 2) {
-    const apiKey = document.getElementById('apiKeyInput').value.trim();
+    const input = document.getElementById('apiKeyInput');
+    const apiKey = input.value.trim();
     if (apiKey) {
+      if (!isValidApiKeyFormat(apiKey)) {
+        showApiKeyError(t('options.apiKeyInvalid'));
+        return;
+      }
+      clearApiKeyError();
       const { settings = {} } = await chrome.storage.local.get('settings');
       settings.apiKey = apiKey;
       await chrome.storage.local.set({ settings });
@@ -87,6 +94,24 @@ async function nextStep() {
   if (currentStep < TOTAL_STEPS) {
     showStep(currentStep + 1);
   }
+}
+
+function showApiKeyError(message) {
+  const input = document.getElementById('apiKeyInput');
+  input.classList.add('error');
+  let err = document.getElementById('apiKeyInputError');
+  if (!err) {
+    err = document.createElement('p');
+    err.id = 'apiKeyInputError';
+    err.className = 'field-error';
+    input.closest('.api-setup').appendChild(err);
+  }
+  err.textContent = message;
+}
+
+function clearApiKeyError() {
+  document.getElementById('apiKeyInput').classList.remove('error');
+  document.getElementById('apiKeyInputError')?.remove();
 }
 
 function prevStep() {

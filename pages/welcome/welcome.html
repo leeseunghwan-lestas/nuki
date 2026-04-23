@@ -49,7 +49,7 @@
         <a href="https://aistudio.google.com/apikey" target="_blank" class="btn-link" data-i18n="welcome.getApiKey">Get free API key from Google AI Studio &rarr;</a>
         <div class="input-row">
           <input type="password" id="apiKeyInput" class="input-field" placeholder="AIza..." data-i18n-placeholder="options.apiKeyPlaceholder">
-          <button id="toggleApiKey" class="btn-icon-sm" aria-label="Show/Hide">
+          <button id="toggleApiKey" class="btn-icon-sm" data-i18n-aria-label="options.showHide" aria-label="Show/Hide">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8Z"/><circle cx="8" cy="8" r="2"/></svg>
           </button>
         </div>
@@ -93,13 +93,98 @@
           <span data-i18n="welcome.step3">Text is copied to your clipboard</span>
         </div>
       </div>
+      <div class="usage-note">
+        <span class="usage-note-icon">&#9432;</span>
+        <div class="usage-note-body">
+          <p class="usage-note-title" data-i18n="welcome.limitTitle">Some pages can't be captured</p>
+          <p class="usage-note-desc" data-i18n="welcome.limitDesc">Chrome blocks extensions from internal pages.</p>
+          <div class="usage-note-tags">
+            <span class="usage-note-tag">chrome://</span>
+            <span class="usage-note-tag" data-i18n="welcome.limitTagStore">Web Store</span>
+            <span class="usage-note-tag" data-i18n="welcome.limitTagPdf">Chrome PDF viewer</span>
+          </div>
+        </div>
+      </div>
       <button class="btn-primary btn-next" data-i18n="welcome.next">Next</button>
       <button class="btn-text btn-back" data-i18n="welcome.back">Back</button>
     </section>
 
-    <!-- Step 4: Settings overview -->
+    <!-- Step 4: Tips for best OCR results -->
     <section class="step" data-step="4">
       <div class="step-badge">3</div>
+      <h2 data-i18n="welcome.tipsTitle">Tips for best results</h2>
+      <p class="step-desc" data-i18n="welcome.tipsDesc">OCR accuracy depends on the source. Keep these in mind:</p>
+      <div class="tips-list">
+        <div class="tip">
+          <svg class="tip-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16.5 10a6.5 6.5 0 1 1-2-4.67"/>
+            <path d="M16.5 4v3h-3"/>
+          </svg>
+          <div class="tip-body">
+            <p class="tip-title" data-i18n="welcome.tipRotated">Rotated or sideways text</p>
+            <p class="tip-desc" data-i18n="welcome.tipRotatedDesc">Text rotated 90° or upside down may not be recognized correctly</p>
+          </div>
+        </div>
+        <div class="tip">
+          <svg class="tip-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="14" height="14" rx="2"/>
+            <path d="M3 13l3-3 3 3 4-4 4 4"/>
+            <circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          <div class="tip-body">
+            <p class="tip-title" data-i18n="welcome.tipQuality">Low-quality images</p>
+            <p class="tip-desc" data-i18n="welcome.tipQualityDesc">Very blurry or low-resolution sources reduce accuracy</p>
+          </div>
+        </div>
+        <div class="tip">
+          <svg class="tip-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8.5" cy="8.5" r="5.5"/>
+            <path d="M12.5 12.5L17 17"/>
+            <path d="M6.5 8.5h4M8.5 6.5v4"/>
+          </svg>
+          <div class="tip-body">
+            <p class="tip-title" data-i18n="welcome.tipSmall">Very small text</p>
+            <p class="tip-desc" data-i18n="welcome.tipSmallDesc">If text is tiny, zoom in on the page first before capturing</p>
+          </div>
+        </div>
+        <div class="tip">
+          <svg class="tip-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 15c2-4 4-6 6-5s3 4 5 3 2-4 3-5"/>
+            <path d="M15 3l2 2-1 1-2-2z"/>
+          </svg>
+          <div class="tip-body">
+            <p class="tip-title" data-i18n="welcome.tipHandwriting">Handwriting or cursive</p>
+            <p class="tip-desc" data-i18n="welcome.tipHandwritingDesc">Handwritten text or heavily stylized cursive has lower recognition accuracy</p>
+          </div>
+        </div>
+        <div class="tip">
+          <svg class="tip-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10" cy="10" r="7"/>
+            <path d="M10 3a7 7 0 0 0 0 14z" fill="currentColor" opacity="0.5"/>
+          </svg>
+          <div class="tip-body">
+            <p class="tip-title" data-i18n="welcome.tipContrast">Low contrast or busy backgrounds</p>
+            <p class="tip-desc" data-i18n="welcome.tipContrastDesc">Text on patterned or similar-color backgrounds may be missed</p>
+          </div>
+        </div>
+        <div class="tip">
+          <svg class="tip-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 16V7a3 3 0 0 1 6 0v9M5 12h6"/>
+            <path d="M13 8c1-1.5 2.5-1.5 2.5 0s-1 1.5-2 1.5M13 14h3"/>
+          </svg>
+          <div class="tip-body">
+            <p class="tip-title" data-i18n="welcome.tipDecorative">Decorative or artistic fonts</p>
+            <p class="tip-desc" data-i18n="welcome.tipDecorativeDesc">Heavily ornamented, art-style, or unusual fonts may be misread</p>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary btn-next" data-i18n="welcome.next">Next</button>
+      <button class="btn-text btn-back" data-i18n="welcome.back">Back</button>
+    </section>
+
+    <!-- Step 5: Settings overview -->
+    <section class="step" data-step="5">
+      <div class="step-badge">4</div>
       <h2 data-i18n="welcome.settingsTitle">Settings</h2>
       <p class="step-desc" data-i18n="welcome.settingsDesc">You can change these anytime from the settings page.</p>
       <div class="settings-grid">
@@ -120,8 +205,8 @@
       <button class="btn-text btn-back" data-i18n="welcome.back">Back</button>
     </section>
 
-    <!-- Step 5: Done -->
-    <section class="step" data-step="5">
+    <!-- Step 6: Done -->
+    <section class="step" data-step="6">
       <div class="step-icon done-icon">
         <span>&#10003;</span>
       </div>

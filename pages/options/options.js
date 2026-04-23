@@ -1,5 +1,6 @@
 import { t, applyI18n, loadLanguage, setLanguage, loadTheme, applyTheme, watchSystemTheme } from '../../utils/i18n.js';
 import { ACTION } from '../../utils/actions.js';
+import { isValidApiKeyFormat } from '../../utils/gemini.js';
 
 const DEFAULTS = {
   apiKey: '',
@@ -66,12 +67,38 @@ async function saveSettings() {
   const preferredModel = document.querySelector('input[name="model"]:checked').value;
   const language = document.getElementById('language').value;
   const theme = document.querySelector('input[name="theme"]:checked').value;
+
+  // Block save on malformed key to prevent mysterious "Failed to fetch" later
+  if (apiKey && !isValidApiKeyFormat(apiKey)) {
+    showApiKeyError(t('options.apiKeyInvalid'));
+    return;
+  }
+  clearApiKeyError();
+
   await chrome.storage.local.set({
     settings: { apiKey, preferredModel, language, theme }
   });
 
   chrome.runtime.sendMessage({ action: ACTION.SETTINGS_CHANGED }).catch(() => {});
   showToast(t('options.saved'));
+}
+
+function showApiKeyError(message) {
+  const input = document.getElementById('apiKey');
+  input.classList.add('error');
+  let err = document.getElementById('apiKeyError');
+  if (!err) {
+    err = document.createElement('p');
+    err.id = 'apiKeyError';
+    err.className = 'field-error';
+    input.closest('.field').appendChild(err);
+  }
+  err.textContent = message;
+}
+
+function clearApiKeyError() {
+  document.getElementById('apiKey').classList.remove('error');
+  document.getElementById('apiKeyError')?.remove();
 }
 
 async function resetDefaults() {

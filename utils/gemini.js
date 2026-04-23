@@ -2,6 +2,20 @@ const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 const CONFIDENCE_THRESHOLD = 70;
 
+// Google AI Studio keys all start with "AIza" and use URL-safe base64 chars.
+// We intentionally don't enforce a strict length — Google hasn't officially
+// documented it and could change the format. The prefix + charset check catches
+// the actual bug class we care about: pasted keys with whitespace / newlines /
+// control characters that would otherwise surface as a confusing
+// "TypeError: Failed to fetch" at the HTTP header validation layer.
+// Real key validity (revoked / wrong project / etc.) is left to Gemini's
+// own 401/403 response.
+const API_KEY_PATTERN = /^AIza[A-Za-z0-9_-]{20,}$/;
+
+export function isValidApiKeyFormat(key) {
+  return typeof key === 'string' && API_KEY_PATTERN.test(key.trim());
+}
+
 const OCR_PROMPT = `You are a highly accurate OCR text extractor specializing in reading difficult documents including scanned papers, faxes, receipts, and low-quality images.
 
 Respond with ONLY a JSON object (no markdown, no code fences).
@@ -29,6 +43,9 @@ Rules:
 export async function geminiOcr(imageBase64, config) {
   const { apiKey, model } = config;
   if (!apiKey) throw new Error('error.noApiKey');
+  // Fail fast on malformed keys — otherwise bad header chars produce
+  // a confusing "Failed to fetch" that users can't distinguish from real network issues.
+  if (!isValidApiKeyFormat(apiKey)) throw new Error('error.invalidApiKey');
 
   const url = `${API_BASE}/${model}:generateContent`;
   const body = JSON.stringify({
@@ -53,30 +70,51 @@ export async function geminiOcr(imageBase64, config) {
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         const detail = err?.error?.message || response.status;
-        if ([429, 500, 502, 503, 504].includes(response.status) && attempt < 2) {
-          lastError = new Error(`error.apiError::${detail}`);
-          const retryAfter = response.status === 429
-            ? parseInt(response.headers.get('Retry-After') || '0', 10)
-            : 0;
-          const delay = retryAfter > 0
-            ? retryAfter * 1000
-            : 1000 * Math.pow(2, attempt);
-          await new Promise(r => setTimeout(r, delay));
+
+        // Quota exceeded — no point retrying, throw immediately with clear message.
+        // Google returns varied phrasings: "Quota exceeded...", "Resource has been exhausted..."
+        if (response.status === 429 && /quota|exhausted|RESOURCE_EXHAUSTED/i.test(String(detail))) {
+          throw new Error('error.quotaExceeded');
+        }
+
+        // Invalid / revoked / wrong-API key — Gemini returns 400/401/403 with "API key" in the detail.
+        // Route to the fully localized error.invalidApiKey so users don't see raw English mixed with the UI language.
+        if ([400, 401, 403].includes(response.status) && /api.?key/i.test(String(detail))) {
+          throw new Error('error.invalidApiKey');
+        }
+
+        // Server-side failure — localized, but still retryable
+        if ([500, 502, 503, 504].includes(response.status) && attempt < 2) {
+          lastError = new Error('error.serverError');
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
           continue;
         }
+        if ([500, 502, 503, 504].includes(response.status)) {
+          throw new Error('error.serverError');
+        }
+
+        // Generic 429 without quota keyword — usually rate limit, retry then give up
+        if (response.status === 429 && attempt < 2) {
+          lastError = new Error('error.rateLimited');
+          const retryAfter = parseInt(response.headers.get('Retry-After') || '0', 10);
+          await new Promise(r => setTimeout(r, retryAfter > 0 ? retryAfter * 1000 : 1000 * Math.pow(2, attempt)));
+          continue;
+        }
+        if (response.status === 429) throw new Error('error.rateLimited');
+
         throw new Error(`error.apiError::${detail}`);
       }
 
       const data = await response.json();
 
-      // Check for blocked/safety errors
-      const blockReason = data?.promptFeedback?.blockReason;
-      if (blockReason) throw new Error(`error.apiError::Blocked: ${blockReason}`);
+      // Safety / policy block at the prompt level — fully localized
+      if (data?.promptFeedback?.blockReason) throw new Error('error.blocked');
 
       const candidate = data?.candidates?.[0];
       const finishReason = candidate?.finishReason;
       if (finishReason && !['STOP', 'MAX_TOKENS'].includes(finishReason)) {
-        throw new Error(`error.apiError::${finishReason}`);
+        // SAFETY / RECITATION / OTHER — all route to error.blocked for a consistent localized message
+        throw new Error('error.blocked');
       }
 
       const rawText = candidate?.content?.parts?.[0]?.text;
@@ -98,8 +136,15 @@ export async function geminiOcr(imageBase64, config) {
         },
       };
     } catch (err) {
-      if (err instanceof TypeError && err.message.includes('fetch')) {
-        throw new Error('error.network');
+      // Network-level failure (DNS, offline, SW restart mid-fetch, firewall) — retry
+      const isNetwork = err instanceof TypeError && err.message.includes('fetch');
+      if (isNetwork) {
+        lastError = new Error('error.network');
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          continue;
+        }
+        throw lastError;
       }
       if (err.message.startsWith('error.')) throw err;
       lastError = err;
