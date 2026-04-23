@@ -75,6 +75,10 @@ async function saveSettings() {
   }
   clearApiKeyError();
 
+  // NOTE: API key is stored in chrome.storage.local as plain text.
+  // MV3 provides no built-in encryption primitive for extension-owned secrets;
+  // this is a known Chrome Extension platform limitation. Users should only
+  // enter keys they're willing to trust at browser-local storage level.
   await chrome.storage.local.set({
     settings: { apiKey, preferredModel, language, theme }
   });

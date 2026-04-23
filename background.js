@@ -1,5 +1,6 @@
 import { geminiOcr, resolveModel } from './utils/gemini.js';
 import { ACTION } from './utils/actions.js';
+import { MAX_HISTORY_ENTRIES } from './utils/constants.js';
 
 // --- Localized messages (Service Worker can't use i18n module) ---
 const messages = {
@@ -175,7 +176,13 @@ async function captureAreaExtraction(tabId, rect, devicePixelRatio) {
 
   try {
     const tabMeta = await chrome.tabs.get(tabId).catch(() => null);
-    if (!isCapturableUrl(tabMeta?.url)) throw new Error('error.protectedPage');
+    // Tab was closed mid-capture — silent exit, but reset side-panel UI
+    // so the "cancel" button doesn't stay stuck indefinitely
+    if (!tabMeta) {
+      broadcastToPopup({ action: ACTION.RESULTS_READY });
+      return;
+    }
+    if (!isCapturableUrl(tabMeta.url)) throw new Error('error.protectedPage');
 
     await injectContentScript(tabId);
     notifyTab(tabId, await getMsg('extracting'), 'loading');
@@ -213,13 +220,10 @@ async function captureAreaExtraction(tabId, rect, devicePixelRatio) {
       model,
     });
 
-    const { status, formatted, reason, tokenUsage } = extractionResult;
+    const { status, formatted, reason } = extractionResult;
     const tab = await chrome.tabs.get(tabId);
 
-    // 4. Track usage regardless of result
-    try { await incrementUsage(tokenUsage); } catch (e) { console.warn('Failed to update usage:', e); }
-
-    // 5. Handle result based on status
+    // Handle result based on status
     if (status === 'ok' && formatted) {
       try { await saveToHistory({ formatted, url: tab.url, timestamp: Date.now() }); } catch (e) { console.warn('Failed to save history:', e); }
       broadcastToPopup({ action: ACTION.RESULTS_READY });
@@ -341,8 +345,6 @@ function notifyTab(tabId, message, type) {
 }
 
 // --- History ---
-const MAX_HISTORY = 20;
-
 async function saveToHistory(entry) {
   const text = entry.formatted || '';
   if (!text.trim()) return;
@@ -353,26 +355,6 @@ async function saveToHistory(entry) {
     url: entry.url,
     timestamp: entry.timestamp || Date.now(),
   });
-  if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
+  if (history.length > MAX_HISTORY_ENTRIES) history.length = MAX_HISTORY_ENTRIES;
   await chrome.storage.local.set({ history });
-}
-
-// --- Usage tracking ---
-async function incrementUsage(tokenUsage = {}) {
-  const { apiUsage = {} } = await chrome.storage.local.get('apiUsage');
-  const now = new Date();
-  const dayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-
-  // Reset daily counters if day changed
-  const isNewDay = apiUsage.dayKey !== dayKey;
-  const dailyCount = isNewDay ? 1 : (apiUsage.dailyCount || 0) + 1;
-  const dailyTokens = {
-    input: (isNewDay ? 0 : (apiUsage.dailyTokens?.input || 0)) + (tokenUsage.input || 0),
-    output: (isNewDay ? 0 : (apiUsage.dailyTokens?.output || 0)) + (tokenUsage.output || 0),
-    total: (isNewDay ? 0 : (apiUsage.dailyTokens?.total || 0)) + (tokenUsage.total || 0),
-  };
-
-  await chrome.storage.local.set({
-    apiUsage: { dailyCount, dailyTokens, dayKey }
-  });
 }

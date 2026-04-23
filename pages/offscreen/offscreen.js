@@ -1,12 +1,13 @@
 // Offscreen document for image cropping + preprocessing with Canvas API
-// Action constant — keep in sync with utils/actions.js ACTION.CROP_IMAGE
-const ACTION_CROP_IMAGE = 'cropImage';
-
-const MIN_DIMENSION = 20;
-const MAX_DIMENSION = 8000;
+import { ACTION } from '../../utils/actions.js';
+import {
+  MIN_CAPTURE_DIMENSION,
+  MAX_CAPTURE_DIMENSION,
+  UPSCALE_FACTOR,
+} from '../../utils/constants.js';
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.action === ACTION_CROP_IMAGE) {
+  if (message.action === ACTION.CROP_IMAGE) {
     cropImage(message.dataUrl, message.rect, message.devicePixelRatio)
       .then(result => sendResponse(result))
       .catch(err => sendResponse({ success: false, error: err.message }));
@@ -28,7 +29,8 @@ async function cropImage(dataUrl, rect, dpr) {
   const img = new Image();
   await new Promise((resolve, reject) => {
     img.onload = resolve;
-    img.onerror = reject;
+    // Wrap in Error — raw DOM Event would surface as "undefined" upstream
+    img.onerror = () => reject(new Error('Failed to load captured image'));
     img.src = dataUrl;
   });
 
@@ -42,10 +44,10 @@ async function cropImage(dataUrl, rect, dpr) {
   sw = Math.max(0, Math.min(sw, img.naturalWidth - sx));
   sh = Math.max(0, Math.min(sh, img.naturalHeight - sy));
 
-  if (sw < MIN_DIMENSION || sh < MIN_DIMENSION) {
+  if (sw < MIN_CAPTURE_DIMENSION || sh < MIN_CAPTURE_DIMENSION) {
     return { success: false, tooSmall: true };
   }
-  if (sw > MAX_DIMENSION || sh > MAX_DIMENSION) {
+  if (sw > MAX_CAPTURE_DIMENSION || sh > MAX_CAPTURE_DIMENSION) {
     return { success: false, error: 'Capture area too large' };
   }
 
@@ -56,10 +58,9 @@ async function cropImage(dataUrl, rect, dpr) {
   const cropCtx = cropCanvas.getContext('2d');
   cropCtx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
 
-  // 2. Upscale 2x (more pixels = better OCR on blurry text)
-  const SCALE = 2;
-  const uw = Math.min(sw * SCALE, MAX_DIMENSION);
-  const uh = Math.min(sh * SCALE, MAX_DIMENSION);
+  // 2. Upscale (more pixels = better OCR on blurry text)
+  const uw = Math.min(sw * UPSCALE_FACTOR, MAX_CAPTURE_DIMENSION);
+  const uh = Math.min(sh * UPSCALE_FACTOR, MAX_CAPTURE_DIMENSION);
   const canvas = document.createElement('canvas');
   canvas.width = uw;
   canvas.height = uh;

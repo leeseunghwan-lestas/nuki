@@ -1,6 +1,6 @@
-const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+import { CONFIDENCE_THRESHOLD } from './constants.js';
 
-const CONFIDENCE_THRESHOLD = 70;
+const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // Google AI Studio keys all start with "AIza" and use URL-safe base64 chars.
 // We intentionally don't enforce a strict length — Google hasn't officially
