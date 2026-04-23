@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "nuki(Beta)",
+  "name": "nuki (Beta)",
   "version": "1.1.0",
   "description": "画面上の任意の領域からテキストを抽出 — Gemini AI によって提供されています / Extract text from any area on screen — powered by Gemini AI",
   "permissions": [

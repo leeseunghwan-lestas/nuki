@@ -126,7 +126,10 @@ async function renderHistory() {
     meta.appendChild(hostSpan);
     meta.appendChild(timeSpan);
 
-    // Edit button (top-right corner, subtle by default)
+    // Action buttons (top-right, hover-visible)
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'history-card-tools';
+
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.className = 'history-card-edit';
@@ -134,9 +137,19 @@ async function renderHistory() {
     editBtn.title = t('popup.edit');
     editBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5H2.5v-3z"/></svg>';
 
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'history-card-delete';
+    deleteBtn.setAttribute('aria-label', t('popup.delete'));
+    deleteBtn.title = t('popup.delete');
+    deleteBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M6 4V2.5h4V4M5 4v9.5h6V4M7 6.5v5M9 6.5v5"/></svg>';
+
+    actionsRow.appendChild(editBtn);
+    actionsRow.appendChild(deleteBtn);
+
     card.appendChild(textEl);
     card.appendChild(meta);
-    card.appendChild(editBtn);
+    card.appendChild(actionsRow);
 
     const copyEntry = () => {
       copyToClipboard(entry.text);
@@ -213,9 +226,15 @@ async function renderHistory() {
       enterEditMode();
     });
 
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await deleteHistoryEntry(entry.timestamp);
+      renderHistory();
+    });
+
     card.addEventListener('click', (e) => {
       if (card.classList.contains('editing')) return;
-      if (e.target.closest('.history-card-edit')) return;
+      if (e.target.closest('.history-card-tools')) return;
       copyEntry();
     });
     card.addEventListener('keydown', (e) => {
@@ -239,6 +258,13 @@ async function updateHistoryEntry(originalTimestamp, newText) {
   if (idx === -1) return;
   history[idx] = { ...history[idx], text: newText };
   await chrome.storage.local.set({ history });
+}
+
+async function deleteHistoryEntry(originalTimestamp) {
+  const { history = [] } = await chrome.storage.local.get('history');
+  const filtered = history.filter(h => h.timestamp !== originalTimestamp);
+  if (filtered.length === history.length) return;
+  await chrome.storage.local.set({ history: filtered });
 }
 
 async function clearHistory() {
@@ -286,7 +312,7 @@ function showError(msg) {
   box.hidden = false;
 
   // Persistent errors stay visible (user needs to act); transient errors auto-dismiss
-  const persistent = ['error.noApiKey', 'error.invalidApiKey', 'error.apiError', 'error.quotaExceeded', 'error.blocked'];
+  const persistent = ['error.noApiKey', 'error.invalidApiKey', 'error.quotaExceeded', 'error.blocked'];
   if (!persistent.some(k => msg.startsWith(k))) {
     setTimeout(() => { box.hidden = true; }, 5000);
   }

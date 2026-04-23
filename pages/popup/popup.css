@@ -330,11 +330,17 @@ body {
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Edit button (top-right, subtle by default) */
-.history-card-edit {
+/* Action tools (top-right, hover-visible) */
+.history-card-tools {
   position: absolute;
   top: 6px;
   right: 6px;
+  display: flex;
+  gap: 2px;
+}
+
+.history-card-edit,
+.history-card-delete {
   width: 22px;
   height: 22px;
   display: flex;
@@ -350,7 +356,9 @@ body {
 }
 
 .history-card:hover .history-card-edit,
-.history-card:focus-within .history-card-edit {
+.history-card:hover .history-card-delete,
+.history-card:focus-within .history-card-edit,
+.history-card:focus-within .history-card-delete {
   opacity: 0.7;
 }
 
@@ -362,6 +370,14 @@ body {
   outline: none;
 }
 
+.history-card-delete:hover,
+.history-card-delete:focus-visible {
+  opacity: 1 !important;
+  color: var(--error);
+  background: var(--surface);
+  outline: none;
+}
+
 /* Edit mode */
 .history-card.editing {
   cursor: default;
@@ -369,7 +385,7 @@ body {
   background: var(--surface);
 }
 
-.history-card.editing .history-card-edit {
+.history-card.editing .history-card-tools {
   display: none;
 }
 

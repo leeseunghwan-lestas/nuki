@@ -102,7 +102,10 @@ export async function geminiOcr(imageBase64, config) {
         }
         if (response.status === 429) throw new Error('error.rateLimited');
 
-        throw new Error(`error.apiError::${detail}`);
+        // Catch-all for any other 4xx — detail is logged for developer debugging,
+        // user sees the fully localized generic message.
+        console.warn('[nuki] Gemini API error:', response.status, detail);
+        throw new Error('error.apiError');
       }
 
       const data = await response.json();

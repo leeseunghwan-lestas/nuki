@@ -15,7 +15,7 @@ const messages = {
     'error.network': 'Network error. Please check your connection.',
     'error.protectedPage': 'Cannot capture this page.',
     'error.cropFailed': 'Failed to process the captured image.',
-    'error.apiError': 'API error: ', // localizeError() appends detail via concatenation (not placeholder)
+    'error.apiError': 'Unexpected API response. Please try again in a moment.',
     'error.quotaExceeded': 'API quota exceeded. Please wait a moment or check your plan.',
     'error.rateLimited': 'Too many requests in a short time. Please wait a moment and try again.',
     'error.serverError': 'Gemini is temporarily unavailable. Please try again shortly.',
@@ -38,7 +38,7 @@ const messages = {
     'error.network': 'ネットワークエラーです。接続を確認してください。',
     'error.protectedPage': 'このページはキャプチャできません。',
     'error.cropFailed': 'キャプチャ画像の処理に失敗しました。',
-    'error.apiError': 'APIエラー: ',
+    'error.apiError': '予期しない API 応答を受信しました。しばらくしてから再度お試しください。',
     'error.quotaExceeded': 'API使用量の上限に達しました。しばらく待つか、プランを確認してください。',
     'error.rateLimited': '短時間のリクエストが多すぎます。少し待ってから再度お試しください。',
     'error.serverError': 'Gemini サーバーが一時的にご利用いただけません。しばらくしてから再度お試しください。',
@@ -58,7 +58,8 @@ async function getMsg(key) {
   return (messages[lang] || messages.en)[key] || messages.en[key];
 }
 
-// Translate error codes (e.g. "error.apiError::detail") to user-friendly messages
+// Translate error codes (e.g. "error.invalidApiKey") to user-friendly messages.
+// Legacy "key::detail" format is still handled by split in case any throw re-adds it.
 async function localizeError(errMsg) {
   if (!errMsg) return await getMsg('error.unknown');
   const [key, detail] = errMsg.split('::');
